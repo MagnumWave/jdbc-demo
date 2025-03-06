@@ -1,10 +1,14 @@
 package com.aurelio.ui;
 
 import com.aurelio.persistence.entity.BoardEntity;
+import com.aurelio.persistence.entity.CardEntity;
+import com.aurelio.service.CardService;
 import lombok.AllArgsConstructor;
 
 import java.sql.SQLException;
 import java.util.Scanner;
+
+import static com.aurelio.persistence.config.ConnectionConfig.getConnection;
 
 @AllArgsConstructor
 public class BoardMenu {
@@ -51,6 +55,15 @@ public class BoardMenu {
     }
 
     private void createCard() throws SQLException {
+        var card = new CardEntity();
+        System.out.println("Informe o título do card");
+        card.setTitle(scanner.next());
+        System.out.println("Informe a descrição do card");
+        card.setDescription(scanner.next());
+        card.setBoardColumn(entity.getInitialColumn());
+        try(var connection = getConnection()){
+            new CardService(connection).insert(card);
+        }
     }
 
     private void moveCardToNextColumn() throws SQLException {

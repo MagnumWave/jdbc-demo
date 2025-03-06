@@ -25,7 +25,7 @@ public class BoardDAO {
         return entity;
     }
 
-    public void delete (final Long id) throws SQLException {
+    public void delete(final Long id) throws SQLException {
         var sql = "DELETE FROM BOARDS WHERE id = ?";
         try(var statement = connection.prepareStatement(sql)){
             statement.setLong(1, id);
