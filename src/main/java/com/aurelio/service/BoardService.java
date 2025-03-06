@@ -33,4 +33,19 @@ public class BoardService {
         return entity;
     }
 
+    public boolean delete(final Long id) throws SQLException {
+        var dao = new BoardDAO(connection);
+        try{
+            if(!dao.exists(id)){
+                return false;
+            }
+            dao.delete(id);
+            connection.commit();
+            return true;
+        } catch (SQLException e) {
+            connection.rollback();
+            throw e;
+        }
+    }
+
 }

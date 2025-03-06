@@ -3,6 +3,7 @@ package com.aurelio.ui;
 import com.aurelio.persistence.entity.BoardColumnEntity;
 import com.aurelio.persistence.entity.BoardColumnKindEnum;
 import com.aurelio.persistence.entity.BoardEntity;
+import com.aurelio.service.BoardQueryService;
 import com.aurelio.service.BoardService;
 
 import static com.aurelio.persistence.config.ConnectionConfig.getConnection;
@@ -75,10 +76,33 @@ public class MainMenu {
         }
     }
 
-    private void selectBoard() {
+    private void selectBoard() throws SQLException {
+        System.out.println("Informe o id do board que deseja selecionar.");
+        var id = scanner.nextLong();
+        try(var connection = getConnection()) {
+            var queryService = new BoardQueryService(connection);
+            var optional = queryService.findById(id);
+            optional.ifPresentOrElse(
+                    b -> new BoardMenu(b).execute(),
+                    () -> System.out.printf("Não foi encontrado um board com o id %s\n", id));
+            optional.ifPresentOrElse(
+                    b -> new BoardMenu(b).execute(),
+                    () -> System.out.printf("Não foi encontrado um board com id %s\n", id)
+            );
+        }
     }
 
-    private void deleteBoard() {
+    private void deleteBoard() throws SQLException {
+        System.out.println("Informe o id do board que será excluido.");
+        var id = scanner.nextLong();
+        try(var connection = getConnection()){
+            var service = new BoardService(connection);
+            if (service.delete(id)){
+                System.out.printf("O board %s foi excluído\n", id);
+            } else {
+                System.out.printf("Não foi encontrado um board com o id %s\n", id);
+            }
+        }
     }
 
     private BoardColumnEntity createColumn(final String name, final BoardColumnKindEnum kind, final int order){
