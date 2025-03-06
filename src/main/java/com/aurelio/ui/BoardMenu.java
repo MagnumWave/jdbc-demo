@@ -1,8 +1,12 @@
 package com.aurelio.ui;
 
 import com.aurelio.dto.BoardColumnInfoDTO;
+import com.aurelio.persistence.entity.BoardColumnEntity;
 import com.aurelio.persistence.entity.BoardEntity;
 import com.aurelio.persistence.entity.CardEntity;
+import com.aurelio.service.BoardColumnQueryService;
+import com.aurelio.service.BoardQueryService;
+import com.aurelio.service.CardQueryService;
 import com.aurelio.service.CardService;
 import lombok.AllArgsConstructor;
 
@@ -122,11 +126,51 @@ public class BoardMenu {
     }
 
     private void showBoard() throws SQLException {
+        try(var connection = getConnection()){
+            var optional = new BoardQueryService(connection).showBoardDetails(entity.getId());
+            optional.ifPresent(b -> {
+                System.out.printf("Board [%s,%s]\n", b.id(), b.name());
+                b.columns().forEach(c ->
+                        System.out.printf("Coluna [%s] tipo: [%s] tem %s cards\n", c.name(), c.kind(), c.cardsAmount())
+                );
+            });
+        }
     }
 
     private void showColumn() throws SQLException {
+        var columnsIds = entity.getBoardColumns().stream().map(BoardColumnEntity::getId).toList();
+        var selectedColumnId = -1L;
+        while (!columnsIds.contains(selectedColumnId)){
+            System.out.printf("Escolha uma coluna do board %s pelo id\n", entity.getName());
+            entity.getBoardColumns().forEach(c -> System.out.printf("%s - %s [%s]\n", c.getId(), c.getName(), c.getKind()));
+            selectedColumnId = scanner.nextLong();
+        }
+        try(var connection = getConnection()){
+            var column = new BoardColumnQueryService(connection).findById(selectedColumnId);
+            column.ifPresent(co -> {
+                System.out.printf("Coluna %s tipo %s\n", co.getName(), co.getKind());
+                co.getCards().forEach(ca -> System.out.printf("Card %s - %s\nDescrição: %s",
+                        ca.getId(), ca.getTitle(), ca.getDescription()));
+            });
+        }
     }
 
     private void showCard() throws SQLException {
+        System.out.println("Informe o id do card que deseja visualizar");
+        var selectedCardId = scanner.nextLong();
+        try(var connection  = getConnection()){
+            new CardQueryService(connection).findById(selectedCardId)
+                    .ifPresentOrElse(
+                            c -> {
+                                System.out.printf("Card %s - %s.\n", c.id(), c.title());
+                                System.out.printf("Descrição: %s\n", c.description());
+                                System.out.println(c.blocked() ?
+                                        "Está bloqueado. Motivo: " + c.blockReason() :
+                                        "Não está bloqueado");
+                                System.out.printf("Já foi bloqueado %s vezes\n", c.blocksAmount());
+                                System.out.printf("Está no momento na coluna %s - %s\n", c.columnId(), c.columnName());
+                            },
+                            () -> System.out.printf("Não existe um card com o id %s\n", selectedCardId));
+        }
     }
 }
