@@ -1,5 +1,6 @@
 package com.aurelio.ui;
 
+import com.aurelio.dto.BoardColumnInfoDTO;
 import com.aurelio.persistence.entity.BoardEntity;
 import com.aurelio.persistence.entity.CardEntity;
 import com.aurelio.service.CardService;
@@ -67,6 +68,16 @@ public class BoardMenu {
     }
 
     private void moveCardToNextColumn() throws SQLException {
+        System.out.println("Informe o id do card que deseja mover para a próxima coluna");
+        var cardId = scanner.nextLong();
+        var boardColumnsInfo = entity.getBoardColumns().stream()
+                .map(bc -> new BoardColumnInfoDTO(bc.getId(), bc.getOrder(), bc.getKind()))
+                .toList();
+        try(var connection = getConnection()){
+            new CardService(connection).moveToNextColumn(cardId, boardColumnsInfo);
+        } catch (RuntimeException ex){
+            System.out.println(ex.getMessage());
+        }
     }
 
     private void blockCard() throws SQLException {
